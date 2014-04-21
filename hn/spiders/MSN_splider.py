@@ -10,7 +10,7 @@ class MSNSpider(CrawlSpider):
     start_urls = ['http://news.msn.com']
 
     rules = (
-            Rule(SgmlLinkExtractor(allow=(r'/.*/$'), deny=(r'/videos/'))),
+            Rule(SgmlLinkExtractor(allow=(r'/.*/$'), deny=(r'/videos/'), restrict_xpaths=(r'//*[@id="nav"]'))),
             Rule(SgmlLinkExtractor(allow=('.*'), restrict_xpaths=(r'//*[@id="main"]')), callback='parse_detail'),
             )
 
