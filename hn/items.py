@@ -11,6 +11,9 @@ class HnItem(Item):
     title = Field()
     link = Field()
 
+class CommonItem(Item):
+    link = Field()
+    content = Field()
 
 class TechCrunchItem(Item):
     link = Field()

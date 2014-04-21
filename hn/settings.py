@@ -22,3 +22,5 @@ PIPELINE_SPIDERS = {
         'TcNewPipeline':['tcnew'],
         'MSNPipeline': ['msn'],
         }
+
+DEPTH_LIMIT = 2
