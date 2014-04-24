@@ -30,3 +30,9 @@ class TcNewItem(Item):
 class MSNItem(Item):
     link = Field()
     content = Field()
+
+class SitemapItem(Item):
+    link = Field()
+    content = Field()
+    title = Field()
+    update = Field()

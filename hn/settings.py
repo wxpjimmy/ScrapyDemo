@@ -23,4 +23,10 @@ PIPELINE_SPIDERS = {
         'MSNPipeline': ['msn'],
         }
 
-DEPTH_LIMIT = 2
+#DEPTH_LIMIT = 2
+
+
+COOKIES_ENABLED = False
+
+#LOG_STDOUT = True
+DOWNLOAD_DELAY = 0.25

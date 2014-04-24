@@ -2,15 +2,12 @@ from bs4 import BeautifulSoup as bs
 from scrapy.spider import Spider
 from scrapy.http import Request
 from hn.items import TcNewItem
-from ElasticsearchClient import ES
 import re
 import os
 import datetime
 
 class TcNewSpider(Spider):
     name = 'tcnew'
-
-    es = ES({"localhost":9200}, 'techcrunch', 'perf')
 
     start_urls = ['http://techcrunch.com/sitemap.xml' ]
 
@@ -20,7 +17,7 @@ class TcNewSpider(Spider):
 #            ('.*', 'parse_page')]
 
     def __init__(self, **kwargs):
-        super(TcNewSpider, self).__init__(self, **kwargs)
+        super(TcNewSpider, self).__init__(self.name, **kwargs)
         self._last = datetime.datetime(1970,1,1)
         self._origin = datetime.datetime(1970, 1, 1)
         exist = os.path.isfile('/Users/jimmy/lastcrawled.txt')
@@ -77,4 +74,4 @@ class TcNewSpider(Spider):
         print 'pipeline init'
 
     def __str__(self):
-        return 'tcnew'
+        return self.name

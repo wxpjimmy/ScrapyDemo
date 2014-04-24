@@ -67,8 +67,7 @@ class TcNewPipeline(object):
 
     def process_item(self, item, spider):
         settings = spider.settings.get('PIPELINE_SPIDERS')
-        sname = str(spider.name)
-        test = sname in settings[self._name]
+        test = spider.name in settings[self._name]
         print test
         if not test:
             return item
@@ -89,8 +88,7 @@ class TcNewPipeline(object):
     def close_spider(self, spider):
         print "Closing spider called!"
         settings = spider.settings.get('PIPELINE_SPIDERS')
-        sname = str(spider.name)
-        test = sname in settings[self._name]
+        test = spider.name in settings[self._name]
         print test
         if test:
             print self._max

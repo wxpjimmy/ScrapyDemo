@@ -5,8 +5,6 @@ from scrapy.http import Request
 from general_util import *
 
 
-
-
 class GeneralSpider(CrawlSpider):
     name = 'general'
     start_urls = []
@@ -22,13 +20,14 @@ class GeneralSpider(CrawlSpider):
             raise Exception("No start urls selected!")
         else:
             print key
+            self._type = key
             self.start_urls = URL_MAP.get(key)
             print(self.start_urls)
             self.rules = RULE_MAP.get(key)
             print(self.rules)
             #select self_start_urls and self_rules based on the parameter
 #        self.start_urls = ['http://www.yahoo.com']
-        super(GeneralSpider, self).__init__(self, **kwargs)
+        super(GeneralSpider, self).__init__(self.name, **kwargs)
 
 #    def start_requests(self):
 #        yield Request('http://www.yahoo.com', self.parse)
@@ -42,3 +41,6 @@ class GeneralSpider(CrawlSpider):
         item['link'] = response.url
         item['content'] = response.body
         return item
+
+    def __str__(self):
+        return "%s_%s" % (self.name, self._type)
