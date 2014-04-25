@@ -11,15 +11,15 @@ def process_wsj_sitemap(spider, body):
     data = bs(body)
     urls = data.find_all('url')
     for url in urls:
-        link = url.loc.string
+        link = url.loc.text
         news = url.find('news:news')
         item = None
         if news is not None:
             item = SitemapItem()
             title = news.find('news:title')
-            item['title'] = title
+            item['title'] = title.text
             date = news.find('news:publication_date')
-            item['update'] = date
+            item['update'] = date.text
         #need to save/get last crawled timestamp to decide whether we need to recrawl the link
         #pattern http://online.wsj.com/google_sitemap_Q1_1996.xml
         req = Request(link, callback = spider.process_page)

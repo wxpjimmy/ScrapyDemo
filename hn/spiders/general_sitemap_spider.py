@@ -48,7 +48,7 @@ class GeneralSitemapSpider(Spider):
         print urls
         #log.msg("Test warning/error log", logging.WARNING)
         for url in urls:
-            yield Request(url, callback=self._parse_sitemap)
+            yield Request(url, callback=self._parse_sitemap, dont_filter=True)
 
 
     def _parse_sitemap(self, response):
@@ -68,13 +68,12 @@ class GeneralSitemapSpider(Spider):
             if s.type == 'sitemapindex':
                 data = bs(body)
                 locs = data.find_all('loc')
-                print len(locs)
                 for link in self._filter_loc(locs):
                     print link
                     if link is None:
                         print "find empty link: ", link
                     else:
-                        yield Request(link, callback=self._parse_sitemap)
+                        yield Request(link, callback=self._parse_sitemap, dont_filter=True)
             elif s.type == 'urlset':
                 func = SM_FUNC.get(self._type)
                 print func.__name__
@@ -93,7 +92,6 @@ class GeneralSitemapSpider(Spider):
         if rules is None:
             log.msg("no rule found")
             for item in locs:
-                print item
                 yield item.string
         else:
             print rules
@@ -116,7 +114,6 @@ class GeneralSitemapSpider(Spider):
         """Return the sitemap body contained in the given response, or None if the
         response is not a sitemap.
         """
-        print "entering get sitemap body"
         if isinstance(response, XmlResponse):
             return response.body
         elif is_gzipped(response):
@@ -129,4 +126,4 @@ class GeneralSitemapSpider(Spider):
             return response.body
 
     def __str__(self):
-        return "%s_%s" % (self.name, self._type)
+        return "%s:%s" % (self.name, self._type)

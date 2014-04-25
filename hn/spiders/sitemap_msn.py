@@ -12,10 +12,10 @@ def process_msn_sitemap(spider, body):
         data = bs(body)
         urls = data.find_all('url')
         for url in urls:
-            link = url.loc.string
+            link = url.loc.text
             item = SitemapItem()
             #format: 2012-10-29T05:42:07Z
-            item['update'] = url.lastmod.string
+            item['update'] = url.lastmod.text
             req = Request(link, callback = spider.process_page)
             req.meta['item'] = item
             yield req

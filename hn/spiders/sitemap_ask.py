@@ -11,11 +11,11 @@ def process_huffingtonpost_sitemap(spider, body):
     data = bs(body)
     urls = data.find_all('url')
     for url in urls:
-        link = url.loc.string
+        link = url.loc.text
         news = url.find('n:news')
         item = SitemapItem()
         #formt 2013-07-28
-        item['update'] = url.lastmod
+        item['update'] = url.lastmod.text
         req = Request(link, callback = spider.process_page)
         req.meta['item'] = item
         yield req

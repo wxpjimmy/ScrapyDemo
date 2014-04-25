@@ -11,22 +11,22 @@ def process_mashable_sitemap(spider, body):
     data = bs(body)
     urls = data.find_all('url')
     for url in urls:
-        link = url.loc.string
+        link = url.loc.text
         news = url.find('n:news')
         item = None
         if news is not None:
             item = SitemapItem()
             title = news.find('n:title')
-            item['title'] = title
+            item['title'] = title.text
             #format: 2014-04-21T00:41:06Z
             date = news.find('n:publication_date')
-            item['update'] = date
+            item['update'] = date.text
         else:
             lastmod = url.find('lastmod')
             if lastmod is not None:
                 item = SitemapItem()
                 #format: 2012-07-16T10:27:55Z
-                item['update'] = lastmod.string
+                item['update'] = lastmod.text
         
         req = Request(link, callback = spider.process_page)
         if item is not None:

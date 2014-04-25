@@ -11,14 +11,14 @@ def process_nytimes_sitemap(spider, body):
     data = bs(body)
     urls = data.find_all('url')
     for url in urls:
-        link = url.loc.string
+        link = url.loc.text
         item = SitemapItem()
         #format: 2014-04-23T18:32:03+00:00
-        item['update'] = url.lastmod.string
+        item['update'] = url.lastmod.text
         news = url.find('news:news')
         if news is not None:
             title = news.find('news:title')
-            item['title'] = title
+            item['title'] = title.text
         
         req = Request(link, callback = spider.process_page)
         req.meta['item'] = item

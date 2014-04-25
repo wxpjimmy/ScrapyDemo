@@ -17,10 +17,10 @@ def process_forbes_sitemap(spider, body):
         if news is not None:
             item = SitemapItem()
             title = news.find('news:title')
-            item['title'] = title
+            item['title'] = title.text
             #date format: 2014-04-22
             date = news.find('news:publication_date')
-            item['update'] = date
+            item['update'] = date.text
         
         req = Request(link, callback = spider.process_page)
         if item is not None:

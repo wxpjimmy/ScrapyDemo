@@ -11,13 +11,13 @@ def process_lifehacker_sitemap(spider, body):
     data = bs(body)
     urls = data.find_all('url')
     for url in urls:
-        link = url.loc.string
+        link = url.loc.text
         if link.trip() == 'http://lifehacker.com':
             continue
         else:
             item = SitemapItem()
             #format: 2014-04-18T11:30:00-07:00
-            item['update'] = url.lastmod.string
+            item['update'] = url.lastmod.text
             req = Request(link, callback = spider.process_page)
             if item is not None:
                 req.meta['item'] = item
