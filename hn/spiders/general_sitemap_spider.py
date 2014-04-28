@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from bs4 import BeautifulSoup as bs
 from scrapy.spider import Spider
 from scrapy.http import Request, XmlResponse
@@ -5,13 +6,15 @@ from hn.items import TcNewItem
 from ElasticsearchClient import ES
 import re
 import os
-import datetime
 from scrapy import log
-from scrapy.utils.sitemap import Sitemap, sitemap_urls_from_robots
+from hn.utils.sitemap_util import SitemapUtil, sitemap_urls_from_robots
 from scrapy.utils.gz import gunzip, is_gzipped
 from sitemap_util import *
 import logging
 from scrapy.log import ScrapyFileLogObserver
+import dateutil
+from dateutil.parser import parse
+import redis
 
 
 class GeneralSitemapSpider(Spider):
@@ -19,13 +22,13 @@ class GeneralSitemapSpider(Spider):
 
     start_urls = []
 
-    def __init__(self, s_type=None, **kwargs):
-        if s_type is None:
+    def __init__(self, key=None, **kwargs):
+        if key is None:
             raise Exception("Must specify a spider type!")
         else:
-            self._type = s_type
-            print s_type
-            time =  datetime.datetime.now()
+            self._type = key
+            print key
+            time =  datetime.datetime.utcnow()
             logfile = "scrapy_%s_%s_%s.log" % (self.name, self._type,time)
             print logfile
             handle = open(logfile, 'w')
@@ -37,14 +40,29 @@ class GeneralSitemapSpider(Spider):
             error_observer = ScrapyFileLogObserver(error_handle, level=logging.WARNING)
             error_observer.start()
 
+            self.key = "%s:%s" % (self.name, self._type)
+            self.lastmodified = datetime.datetime.utcnow()
+
             # load urls, load last crawled time
         super(GeneralSitemapSpider, self).__init__(self.name, **kwargs)
 
     def start_requests(self):
+        #some initialize, have to put here for we need settings in crawler, but in __init__the
+        #crawler haven't been set
+        host = self.settings.get('REDIS_HOST', 'localhost')
+        port = self.settings.get('REDIS_PORT', 6379)
+        self.server = redis.Redis(host, port)
+
+        cached = self.server.get(self.key)
+        if cached is None:
+            now = datetime.datetime.utcnow()
+            start = now - timedelta(days=7)
+            self.lastmodified = datetime.datetime(start.year, start.month, start.day)
+        else:
+            self.lastmodified = datetime.datetime.strptime(cached, '%Y-%m-%d %H:%M:%S')
+
+        print self.lastmodified
         urls = SM_URL.get(self._type)
-        #log.msg(urls, level=log.INFO)
-        #log.msg(urls, level=log.DEBUG)
-        #log.msg(urls, level=log.WARNING)
         print urls
         #log.msg("Test warning/error log", logging.WARNING)
         for url in urls:
@@ -63,28 +81,79 @@ class GeneralSitemapSpider(Spider):
                         level=log.WARNING, spider=self, response=response)
                 return
 
-            s = Sitemap(body)
+            s = SitemapUtil(body)
             print s.type
             if s.type == 'sitemapindex':
-                data = bs(body)
-                locs = data.find_all('loc')
-                for link in self._filter_loc(locs):
+                for link in self._filter_loc(s):
                     print link
-                    if link is None:
-                        print "find empty link: ", link
-                    else:
-                        yield Request(link, callback=self._parse_sitemap, dont_filter=True)
+                    yield Request(link, callback=self._parse_sitemap, dont_filter=True)
             elif s.type == 'urlset':
-                func = SM_FUNC.get(self._type)
-                print func.__name__
-                for req in func(self, body):
+#                func = SM_FUNC.get(self._type)
+#                print func.__name__
+#                for req in func(self, s):
+                for req in self.process_urlset(s):
                     yield req
+
+    def process_urlset(self, s):
+        for values in s:
+            link = values['loc']
+            format = SM_DATE.get(self._type)
+            title = values.get('title')
+            if title:
+                date = values.get('publication_date')
+                item = SitemapItem()
+                item['title'] = title
+                if format:
+                    item['update'] = datetime.datetime.strptime(date, format)
+                else:
+                    dt = parse(date)
+                    dt_utc = dt.astimezone(dateutil.tz.tzutc()).replace(tzinfo=None)
+                    item['update'] = dt_utc
+            else:
+                #format 2014-04-27
+                date = values.get('lastmod')
+                if date:
+                    item = SitemapItem()
+                    if format:
+                        item['update'] = datetime.datetime.strptime(date, format)
+                    else:
+                        dt = parse(date)
+                        dt_utc = dt.astimezone(dateutil.tz.tzutc()).replace(tzinfo=None)
+                        item['update'] = dt_utc
+
+            req = Request(link, callback = self.process_page)
+            if item:
+                date = item.get('update')
+                if date and self.lastmodified > date:
+                    print "Filtered: " , date
+                    continue
+                else:
+                    req.meta['item'] = item
+                    yield req
+            else:
+                yield req        
     
     def process_page(self, response):
+        item = response.meta.get('item')
+        if item is None:
+            item = SitemapItem()
+            title = self._extract_title(response.body)
+            if title:
+                item['title'] = title.string
+
+        item['link'] = response.url
+        item['content'] = response.body_as_unicode()
+        yield item
+#        func = PAGE_FUNC.get(self._type)
+#        print func.__name__
+#        for item in func(response):
+#            yield item
+
+    def _extract_title(self, data):
         func = PAGE_FUNC.get(self._type)
-        print func.__name__
-        for item in func(response):
-            yield item
+        if func:
+            return func(data)
+        return
 
     def _filter_loc(self, locs):
         log.msg("filter starts")
@@ -92,22 +161,21 @@ class GeneralSitemapSpider(Spider):
         if rules is None:
             log.msg("no rule found")
             for item in locs:
-                yield item.string
+                yield item['loc']
         else:
             print rules
             for item in locs:
                 should_filter = False
                 for rule in rules:
                     ptn = re.compile(rule, re.IGNORECASE)
-                    match = ptn.match(item.string)
+                    match = ptn.match(item['loc'])
                     if match is not None:
                         should_filter = True
                         break
                 if should_filter:
                     continue
                 else:
-                    yield item.string
-
+                    yield item['loc']
 
 
     def _get_sitemap_body(self, response):
@@ -126,4 +194,6 @@ class GeneralSitemapSpider(Spider):
             return response.body
 
     def __str__(self):
-        return "%s:%s" % (self.name, self._type)
+        return self.key
+
+    __repr__ = __str__

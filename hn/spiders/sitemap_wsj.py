@@ -1,8 +1,8 @@
-from scrapy.contrib.spiders import Rule
-from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from bs4 import BeautifulSoup as bs
 from scrapy.http import Request
 from hn.items import SitemapItem
+import dateutil
+from dateutil.parser import parse
 
 ## processing wsj
 
@@ -18,8 +18,11 @@ def process_wsj_sitemap(spider, body):
             item = SitemapItem()
             title = news.find('news:title')
             item['title'] = title.text
+            #format: 2014-04-27T05:49:00-05:00
             date = news.find('news:publication_date')
-            item['update'] = date.text
+            dt = parse(date.text)
+            dt_utc = dt.astimezone(dateutil.tz.tzutc()).replace(tzinfo=None)
+            item['update'] = dt_utc
         #need to save/get last crawled timestamp to decide whether we need to recrawl the link
         #pattern http://online.wsj.com/google_sitemap_Q1_1996.xml
         req = Request(link, callback = spider.process_page)

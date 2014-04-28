@@ -1,8 +1,8 @@
-from scrapy.contrib.spiders import Rule
-from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from bs4 import BeautifulSoup as bs
 from scrapy.http import Request
 from hn.items import SitemapItem
+import dateutil
+from dateutil.parser import parse
 
 ## processing yahoo news
 
@@ -20,13 +20,17 @@ def process_yahoo_sitemap(spider, body):
             item['title'] = title.text
             #format: 2014-04-22T22:27:49+00:00
             date = news.find('news:publication_date')
-            item['update'] = date.text
+            dt = parse(date.text)
+            dt_utc = dt.astimezone(dateutil.tz.tzutc()).replace(tzinfo=None)
+            item['update'] = dt_utc
         else:
             lastmod = url.lastmod
             if lastmod:
                 item = SitemapItem()
                 #format: 2014-04-23T09:14:00+00:00
-                item['update'] = lastmod.text
+                dt = parse(lastmod.text)
+                dt_utc = dt.astimezone(dateutil.tz.tzutc()).replace(tzinfo=None)
+                item['update'] = dt_utc
         req = Request(link, callback = spider.process_page)
         if item is not None:
             req.meta['item'] = item

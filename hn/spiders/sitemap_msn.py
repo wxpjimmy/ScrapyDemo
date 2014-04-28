@@ -1,8 +1,7 @@
-from scrapy.contrib.spiders import Rule
-from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from bs4 import BeautifulSoup as bs
 from scrapy.http import Request
 from hn.items import SitemapItem
+import datetime
 
 ## processing msn news
 
@@ -15,7 +14,7 @@ def process_msn_sitemap(spider, body):
             link = url.loc.text
             item = SitemapItem()
             #format: 2012-10-29T05:42:07Z
-            item['update'] = url.lastmod.text
+            item['update'] = datetime.datetime.strptime(url.lastmod.text.strip(), '%Y-%m-%dT%H:%M:%SZ')
             req = Request(link, callback = spider.process_page)
             req.meta['item'] = item
             yield req

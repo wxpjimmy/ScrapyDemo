@@ -1,8 +1,7 @@
-from scrapy.contrib.spiders import Rule
-from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from bs4 import BeautifulSoup as bs
 from scrapy.http import Request
 from hn.items import SitemapItem
+import datetime
 
 ## processing forbes
 
@@ -20,7 +19,7 @@ def process_forbes_sitemap(spider, body):
             item['title'] = title.text
             #date format: 2014-04-22
             date = news.find('news:publication_date')
-            item['update'] = date.text
+            item['update'] = datetime.datetime.strptime(date.text.strip(), '%Y-%m-%d')
         
         req = Request(link, callback = spider.process_page)
         if item is not None:

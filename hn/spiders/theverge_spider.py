@@ -14,7 +14,7 @@ class TheVergeSpider(CrawlSpider):
             Rule(SgmlLinkExtractor(allow=(r'http://www.theverge.com/\d{4}/\d{1,2}/\d{1,2}/.*')), callback='process_article'),
             Rule(SgmlLinkExtractor(allow=(r'http://www.theverge.com/\w+$', r'http://www.theverge.com/us-world$'), 
                 deny=(r'http://www.theverge.com/.*/.*', r'/search', r'/forums', r'/longform', r'video', r'/jobs', r'/archives'))),
-            Rule(SgmlLinkExtractor(allow=(r'/.*/archives$', r'/.*/archives/\d+$'))),
+#            Rule(SgmlLinkExtractor(allow=(r'/.*/archives$', r'/.*/archives/\d+$'))),
             )
 
 

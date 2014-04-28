@@ -4,22 +4,23 @@ from hn.items import SitemapItem
 import dateutil
 from dateutil.parser import parse
 
-## processing reuter
 
-def process_reuter_sitemap(spider, body):
-    print "Enter processing sitemap for reuter"
+## processing huffingtonpost
+
+def process_huffingtonpost_sitemap(spider, body):
+    print "Enter processing sitemap for huff"
     data = bs(body)
     urls = data.find_all('url')
     for url in urls:
         link = url.loc.text
-        news = url.find('news:news')
+        news = url.find('n:news')
         item = None
         if news is not None:
             item = SitemapItem()
-            title = news.find('news:title')
+            title = news.find('n:title')
             item['title'] = title.text
-            #format: 2014-04-27T08:52:24+00:00
-            date = news.find('news:publication_date')
+            #format: 2014-04-26T23:59:01-04:00
+            date = news.find('n:publication_date')
             dt = parse(date.text)
             dt_utc = dt.astimezone(dateutil.tz.tzutc()).replace(tzinfo=None)
             item['update'] = dt_utc
@@ -31,14 +32,24 @@ def process_reuter_sitemap(spider, body):
             pass
         yield req
 
+def extract_title(page):
+    data = bs(page)
+    title = data.find('h1', {"class": "title"})
+    return title
 
-def process_reuter_page(response):
+
+def process_huffingtonpost_page(response):
     item = response.meta.get('item')
     if item is None:
         item = SitemapItem()
+        data = bs(response.body)
+        title = data.find('h1', {"class": "title"})
+        if title is not None:
+            item['title'] = title.string
+        else:
+            pass
     else:
         pass
     item['link'] = response.url
     item['content'] = response.body
     yield item
-

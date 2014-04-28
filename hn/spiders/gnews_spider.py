@@ -10,7 +10,7 @@ class GoogleNewsSpider(CrawlSpider):
 
     rules = (
             Rule(SgmlLinkExtractor(allow=(r'https?://news.google.com/news/section.*'), deny=(r'.*ict=clu_top'), restrict_xpaths=(r'//*[@id="nav-menu-wrapper"]', r'//*[@id="main-pane"]/div/div/div[3]'))),
-            Rule(SgmlLinkExtractor(allow=(r'.*'), deny=(r'.*//\w+.google.com/.*', r'.js', r'.php')), callback='process_content'),
+            Rule(SgmlLinkExtractor(allow=(r'.*'), deny=(r'.*//\w+.google.*/.*', r'.js', r'.php')), callback='process_content'),
             )
 
     def __init__(self, **kwargs):

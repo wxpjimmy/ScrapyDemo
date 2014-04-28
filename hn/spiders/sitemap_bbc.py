@@ -1,4 +1,3 @@
-from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from bs4 import BeautifulSoup as bs
 from scrapy.http import Request
 from hn.items import SitemapItem

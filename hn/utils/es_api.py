@@ -1,4 +1,4 @@
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, helpers
 import json
 from datetime import datetime
 import time
@@ -14,7 +14,6 @@ def timeit(func):
         return ret
     return wrap
 
-
 class ES(object):
     """
     Elasticsearch API wrapper
@@ -23,6 +22,7 @@ class ES(object):
         self.instance = Elasticsearch(hosts=nodes)
         self._index = index or 'ivy'
         self._doc_type = doc_type or 'webpage'
+        self.actions = []
 
     def __build_index_content(self, url, content, title, update):
         req = {"url":url, "data":content}
@@ -75,11 +75,80 @@ class ES(object):
         return {"cost": cost, "result":result}
 
     @timeit
-    def index(self, url, content, title, update, s_type):
+    def bulk_index(self, s_type, stats_only = False):
+        try:
+            success, fail = helpers.bulk(self.instance, self.actions, stats_only)
+            del self.actions[0:len(self.actions)]
+            print success
+            print fail
+            return success, fail
+        except Exception,e:
+            log.msg("Error in bulk index: %s" % e, log.ERROR)
+            success = 0
+            fail = 0
+            for item in self.actions:
+                content = item.get("_source")
+                tid = item.get('_id')
+                try:
+                    p = self.instance.index(index=self._index, doc_type=self._doc_type, id=tid, body=content)
+                    if not self.__parse_index_response(p, s_type):
+                        fail += 1
+                        log.msg("Error occurred when indexing: %s; Results: %s" % (url, p), log.ERROR)
+                    else:
+                        success += 1
+                except:
+                    fail += 1
+            del self.actions[0:len(self.actions)]
+            return success, fail
+
+
+    @timeit
+    def index(self, url, content, title, update, s_type, bulk = True, bulk_size = 100):
         """
         index url and content with default index and doc_type
         """
-        return self.index_customize(self._index, self._doc_type, url, content,title, update, s_type)
+        if bulk:
+            up = None
+            if update:
+                up = update.strftime('%Y-%m-%d %H:%M:%S')
+            else:
+                up = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+            if title:
+                action = {
+                    "_index": self._index,
+                    "_type": self._doc_type,
+                    "_id": hex(hash(url)),
+                    "_source": {
+                        "url": url,
+                        "data": content,
+                        "title": title,
+                        "update": up,
+                        "src": s_type,
+                        "_ttl": "14d"
+                    }
+                }
+            else:
+                action = {
+                    "_index": self._index,
+                    "_type": self._doc_type,
+                    "_id": hex(hash(url)),
+                    "_source": {
+                        "url": url,
+                        "data": content,
+#                        "title": title,
+                        "update": up,
+                        "src": s_type,
+                        "_ttl": "14d"
+                    }
+                } 
+
+            self.actions.append(action)
+            if len(self.actions) == bulk_size:
+                return self.bulk_index(s_type)
+            else:
+                return None
+        else:
+            return self.index_customize(self._index, self._doc_type, url, content,title, update, s_type)
 
     def index_customize(self, index, doc_type, url, content, title, update, s_type):
         """

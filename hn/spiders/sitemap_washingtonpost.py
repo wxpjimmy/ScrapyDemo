@@ -1,8 +1,7 @@
-from scrapy.contrib.spiders import Rule
-from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from bs4 import BeautifulSoup as bs
 from scrapy.http import Request
 from hn.items import SitemapItem
+import datetime
 
 ## processing washingtonpost
 
@@ -20,13 +19,13 @@ def process_washingtonpost_sitemap(spider, body):
             item['title'] = title.text
             #format: 2014-04-23T02:56:41Z
             date = news.find('n:publication_date')
-            item['update'] = date.text
+            item['update'] = datetime.datetime.strptime(date.text.strip(), '%Y-%m-%dT%H:%M:%SZ')
         else:
             #format: 2014-04-23T02:56:41Z
             lastmod = url.find('lastmod')
             if lastmode is not None:
                 item = SitemapItem()
-                item['update'] = lastmod.text
+                item['update'] = datetime.datetime.strptime(lastmod.text.strip(), '%Y-%m-%dT%H:%M:%SZ')
         req = Request(link, callback = spider.process_page)
         if item is not None:
             req.meta['item'] = item

@@ -1,8 +1,7 @@
-from scrapy.contrib.spiders import Rule
-from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from bs4 import BeautifulSoup as bs
 from scrapy.http import Request
 from hn.items import SitemapItem
+import datetime
 
 ## processing cnn
 
@@ -18,8 +17,15 @@ def process_cnn_sitemap(spider, body):
             item = SitemapItem()
             title = news.find('news:title')
             item['title'] = title.text
+            #format: 2014-04-27T08:56:04Z
             date = news.find('news:publication_date')
-            item['update'] = date.text
+            item['update'] = datetime.datetime.strptime(date.text.strip(), '%Y-%m-%dT%H:%M:%SZ')
+        else:
+            lastmod = url.find('lastmod')
+            if lastmod:
+                item = SitemapItem()
+                #format: 2014-04-25T10:27:05Z
+                item['update'] = datetime.datetime.strptime(lastmod.text.strip(), '%Y-%m-%dT%H:%M:%SZ')
         
         req = Request(link, callback = spider.process_page)
         if item is not None:
@@ -27,7 +33,6 @@ def process_cnn_sitemap(spider, body):
         else:
             pass
         yield req
-
 
 def process_cnn_page(response):
     item = response.meta.get('item')

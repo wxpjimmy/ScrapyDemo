@@ -22,10 +22,10 @@ ITEM_PIPELINES = {
 PIPELINE_SPIDERS = {
         'TcNewPipeline':['tcnew'],
         'MSNPipeline': ['msn'],
-        'GeneralSitemapPipeline': ['sitemap']
+        'GeneralSitemapPipeline': ['sitemap', 'general']
         }
 
-#DEPTH_LIMIT = 2
+DEPTH_LIMIT = 4
 DOWNLOADER_MIDDLEWARES = {
     'scrapy.contrib.downloadermiddleware.useragent.UserAgentMiddleware': None,
     'hn.contrib.downloadmiddleware.rotate_useragent.RotateUserAgentMiddleware':400,
@@ -53,5 +53,5 @@ DUPEFILTER_EXPIRE = 2*24*3600
 
 ES_SERVER = 'localhost'
 ES_PORT = '9200'
-ES_INDEX = 'mac'
+ES_INDEX = 'news'
 ES_DOC_TYPE = 'perf'

@@ -90,6 +90,7 @@ class Scheduler(object):
     def enqueue_request(self, request):
         if not request.dont_filter and self.df.request_seen(request):
             log.msg("Found duplicate url: %s" % request.url)
+            self.stats.inc_value('scheduler/duplicate/url', spider = self.spider)
             return
         self.stats.inc_value('scheduler/enqueued/redis', spider=self.spider)
         self.queue.push(request)

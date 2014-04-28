@@ -1,12 +1,12 @@
-from scrapy.contrib.spiders import Rule
-from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 from bs4 import BeautifulSoup as bs
 from scrapy.http import Request
 from hn.items import SitemapItem
+import dateutil
+from dateutil.parser import parse
 
 ## processing usatoday
 
-def process_usatoday_sitemap(spider, body):
+def process_usatoday_sitemap(spider, s):
     print "Enter processing sitemap for usatoday"
     data = bs(body)
     urls = data.find_all('url')
@@ -18,8 +18,11 @@ def process_usatoday_sitemap(spider, body):
             item = SitemapItem()
             title = news.find('news:title')
             item['title'] = title.text
+            #format: 2014-04-27T00:22:07-04:00
             date = news.find('news:publication_date')
-            item['update'] = date.text
+            dt = parse(date.text)
+            dt_utc = dt.astimezone(dateutil.tz.tzutc()).replace(tzinfo=None)
+            item['update'] = dt_utc
         
         req = Request(link, callback = spider.process_page)
         if item is not None:
@@ -36,6 +39,6 @@ def process_usatoday_page(response):
     else:
         pass
     item['link'] = response.url
-#    item['content'] = response.body
+    item['content'] = response.body
     yield item
 
