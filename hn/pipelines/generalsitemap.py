@@ -3,6 +3,8 @@ from hn.utils.es_api import *
 import redis
 from datetime import datetime, timedelta
 import traceback
+import pprint
+import os
 
 
 class GeneralSitemapPipeline(object):
@@ -34,6 +36,8 @@ class GeneralSitemapPipeline(object):
                 self.lastmodified = datetime.strptime(cached, self.Time_Format)
 
             self.cur_max = self.lastmodified
+            self.stats.set_value('es/index/success', 0)
+            self.stats.set_value('es/index/failed', 0)
 
     @classmethod
     def from_settings(cls, settings):
@@ -74,12 +78,16 @@ class GeneralSitemapPipeline(object):
                 self.bulk_opt(resp)
             else:
                 data = self.es.index(item['link'], item['content'], item.get('title'), update, type, bulk)
-                created = data["created"]
-                version = data["_version"]
+                created = data.get("created")
+                version = data.get("_version")
                 if created & version==1:
-                    log.msg("[%s] [no_time] create Index for url: %s" % (spider, item['link']), log.DEBUG)
+                    cls.stats.inc_value('es/index/success')
+                    log.msg("[%s] create Index for url: %s" % (spider, item['link']), log.DEBUG)
                 elif version > 1:
-                    log.msg("[%s] [no_time] update Index for url: %s" % (spider, item['link']), log.DEBUG) 
+                    cls.stats.inc_value('es/index/update')
+                    log.msg("[%s] update Index for url: %s" % (spider, item['link']), log.DEBUG) 
+                else:
+                    cls.stats.inc_value('es/index/failed')
         except Exception, e:
             log.msg("Index Error: %s" % e, log.ERROR)
             traceback.print_exc()
@@ -97,6 +105,8 @@ class GeneralSitemapPipeline(object):
                 err_count = errors
             else:
                 err_count = len(errors)
+            self.stats.inc_value('es/index/success', count=succeed)
+            self.stats.inc_value('es/index/failed', count=err_count)
             log.msg("Bulk index succeed: %d,  failed: %d" % (succeed, err_count), log.WARNING)        
 
 
@@ -111,7 +121,23 @@ class GeneralSitemapPipeline(object):
             #no update found, use current utc time as the update time
             if self.cur_max == self.lastmodified:
                 self.cur_max = datetime.utcnow()
-            log.msg("Saving lastupdate[%s] to redis." % self.cur_max)
-            self.server.set(key, self.cur_max.strftime(self.Time_Format))
+
+            if self.stats.get_value('es/index/success', default=0) != 0:
+                log.msg("Saving lastupdate [%s] to redis." % self.cur_max)
+                self.server.set(key, self.cur_max.strftime(self.Time_Format))
+            else:
+                log.msg('no page crawled!')
+
+            date = datetime.utcnow().date()
+
+            #save running stats to local file
+            rootdir = spider.settings.get('STATS_LOG_PATH', '/var/log/scrapyd/stats/')
+            filename = "Stats_%s_%s.log" % (spider._type, date)
+            filename = os.path.join(rootdir, filename)
+            
+            with open(filename, 'a+') as fs:
+                stats = pprint.pformat(self.stats._stats)
+                fs.write(stats + '\n\n')
+
             log.msg("Close Spider [%s] in GeneralSitemapPipeline." % key)
 

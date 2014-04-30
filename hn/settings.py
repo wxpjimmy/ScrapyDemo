@@ -55,3 +55,5 @@ ES_SERVER = 'localhost'
 ES_PORT = '9200'
 ES_INDEX = 'news'
 ES_DOC_TYPE = 'perf'
+
+STATS_LOG_PATH = '/var/log/scrapyd/stats/'

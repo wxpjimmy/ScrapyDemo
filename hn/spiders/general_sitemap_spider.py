@@ -29,13 +29,19 @@ class GeneralSitemapSpider(Spider):
             self._type = key
             print key
             time =  datetime.datetime.utcnow()
+            log_path = '/var/log/scrapyd/logs/'
+#            exist = os.path.exists(log_path)
+#            if not exist:
+#                os.makedirs(log_path)
             logfile = "scrapy_%s_%s_%s.log" % (self.name, self._type,time)
+            logfile = os.path.join(log_path, logfile)
             print logfile
             handle = open(logfile, 'w')
-            log_observer = ScrapyFileLogObserver(handle, level=logging.DEBUG)
+            log_observer = ScrapyFileLogObserver(handle, level=logging.INFO)
             log_observer.start()
             
             error_file = "scrapy_%s_%s_%s_Error.log" % (self.name, self._type, time)
+            error_file = os.path.join(log_path, error_file)
             error_handle = open(error_file, 'w')
             error_observer = ScrapyFileLogObserver(error_handle, level=logging.WARNING)
             error_observer.start()
@@ -73,7 +79,7 @@ class GeneralSitemapSpider(Spider):
         print response.url
         if response.url.endswith('/robots.txt'):
             for url in sitemap_urls_from_robots(response.body):
-                yield Request(url, callback=self._parse_sitemap)
+                yield Request(url, callback=self._parse_sitemap, dont_filter=True)
         else:
             body = self._get_sitemap_body(response)
             if body is None:
@@ -126,6 +132,7 @@ class GeneralSitemapSpider(Spider):
                 date = item.get('update')
                 if date and self.lastmodified > date:
                     print "Filtered: " , date
+                    self.crawler.stats.inc_value('spider/date/filter', spider=self)
                     continue
                 else:
                     req.meta['item'] = item

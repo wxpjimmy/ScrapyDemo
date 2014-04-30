@@ -8,9 +8,9 @@ try:
 except ImportError:
     import pickle
 
-import json
-
 import sys
+from scrapy import log
+import pprint
 
 sys.setrecursionlimit(10000)
 
@@ -32,8 +32,9 @@ class Base(object):
     def _encode_request(self, request):
         """Encode a request object"""
         dic = request_to_dict(request, self.spider)
-        print dic
-        return pickle.dumps(dic, protocol=2)
+        #data = pprint.pformat(dic)
+        #log.msg('Queue Data: %s' % data, log.WARNING)
+        return pickle.dumps(dic, protocol=-1)
 #        return json.dumps(dic)
 
     def _decode_request(self, encoded_request):

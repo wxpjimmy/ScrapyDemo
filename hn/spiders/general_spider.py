@@ -7,6 +7,7 @@ from scrapy.log import ScrapyFileLogObserver
 from general_util import *
 import datetime
 import re
+import os
 
 class GeneralSpider(CrawlSpider):
     name = 'general'
@@ -29,16 +30,21 @@ class GeneralSpider(CrawlSpider):
             print(self.rules)
 
             time =  datetime.datetime.utcnow()
+            log_path = '/var/log/scrapyd/logs/'
             logfile = "scrapy_%s_%s_%s.log" % (self.name, self._type, time)
+            logfile = os.path.join(log_path, logfile)
             print logfile
             handle = open(logfile, 'w')
             log_observer = ScrapyFileLogObserver(handle, level=logging.DEBUG)
             log_observer.start()
             
             error_file = "scrapy_%s_%s_%s_Error.log" % (self.name, self._type, time)
+            error_file = os.path.join(log_path, error_file)
             error_handle = open(error_file, 'w')
             error_observer = ScrapyFileLogObserver(error_handle, level=logging.WARNING)
             error_observer.start()
+
+            self.first_not_filter = []
             #select self_start_urls and self_rules based on the parameter
 #        self.start_urls = ['http://www.yahoo.com']
         super(GeneralSpider, self).__init__(self.name, **kwargs)
@@ -51,27 +57,31 @@ class GeneralSpider(CrawlSpider):
             return
         seen = set()
         for n, rule in enumerate(self._rules):
-            links = [l for l in rule.link_extractor.extract_links(response) if l not in seen]
+            ls = rule.link_extractor.extract_links(response)
+            links = [l for l in ls if l not in seen]
             if links and rule.process_links:
                 links = rule.process_links(links)
             for link in links:
                 seen.add(link)
                 not_filter_rules = DONT_FILTER.get(self._type)
                 dont_filter = False
-                if not_filter_rules:
-                    for r in not_filter_rules:
-                        ptn = re.compile(r)
-                        match = ptn.match(link.url)
-                        if match:
-                            dont_filter = True
+                if link.url not in self.first_not_filter: ## or consider using depth to control this???
+                    if not_filter_rules:
+                        for r in not_filter_rules:
+                            ptn = re.compile(r)
+                            match = ptn.match(link.url)
+                            if match:
+                                dont_filter = True
+                                self.first_not_filter.append(link.url)
+                                break
                 r = Request(url=link.url, callback=self._response_downloaded, dont_filter=dont_filter)
                 r.meta.update(rule=n, link_text=link.text)
                 yield rule.process_request(r)
 
 
     def process_content(self, response):
-        depth = response.meta['depth']
-        print depth
+ #       depth = response.meta['depth']
+ #       print depth
         print response.url
 
         item = SitemapItem()

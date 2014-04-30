@@ -7,6 +7,7 @@ import time
 
 from scrapy.dupefilter import BaseDupeFilter
 from scrapy.utils.request import request_fingerprint
+from scrapy import log
 
 
 class RFPDupeFilter(BaseDupeFilter):
@@ -48,6 +49,7 @@ class RFPDupeFilter(BaseDupeFilter):
         """
  #       log.msg("Duplicate key: %s" % self.key)
         fp = request_fingerprint(request)
+ #       log.msg("Url: %s  Fingerprint: %s type: %s" % (request.url, fp, str(type(fp))), log.WARNING)
         if self.key_exist:
             if self.server.sismember(self.key,fp):
                 return True
@@ -60,6 +62,7 @@ class RFPDupeFilter(BaseDupeFilter):
         else:
             self.server.sadd(self.key, fp)
             self.server.expire(self.key, self.key_expire)
+            self.key_exist = True
 
     def close(self, reason):
         """Delete data on close. Called by scrapy's scheduler"""
