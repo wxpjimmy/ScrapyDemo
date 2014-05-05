@@ -1,4 +1,5 @@
 from sitemap_huff import *
+"""
 from sitemap_wsj import *
 from sitemap_cnn import *
 from sitemap_reuter import *
@@ -14,7 +15,7 @@ from sitemap_msn import *
 from sitemap_nytimes import *
 
 
-"""
+
 SM_FUNC = { "huff": process_huffingtonpost_sitemap,
             "wsj": process_wsj_sitemap,
             "cnn": process_cnn_sitemap,
@@ -62,7 +63,8 @@ SM_DATE = {
             "washingtonpost": '%Y-%m-%dT%H:%M:%SZ',
             "yahoo": None,
             "msn": '%Y-%m-%dT%H:%M:%SZ',
-            "nytimes": None
+            "nytimes": None,
+            "gulfnews": '%Y-%m-%d'
           }
 
 SM_URL = { 
@@ -92,7 +94,8 @@ SM_URL = {
                   'http://news.yahoo.com/sitemap/original/index.xml',
                   'http://news.yahoo.com/_s/sitemap-story.xml'],
         "msn": ['http://news.msn.com/robots.txt'],
-        "nytimes": ['http://www.nytimes.com/sitemaps/sitemap_news/sitemap.xml.gz']
+        "nytimes": ['http://www.nytimes.com/sitemaps/sitemap_news/sitemap.xml.gz'],
+        "gulfnews": ['http://gulfnews.com/robots.txt']
         }
 
 SM_FILTER = {"cnn": ['.*/sitemap-specials-.*', '.*/sitemap-gallery-.*'],

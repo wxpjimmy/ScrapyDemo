@@ -1,6 +1,6 @@
 from scrapy.contrib.spiders import CrawlSpider, Rule
 from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
-from hn.items import SitemapItem
+from MacCrawl.items import SitemapItem
 from scrapy.http import Request, HtmlResponse
 import logging
 from scrapy.log import ScrapyFileLogObserver
@@ -35,7 +35,7 @@ class GeneralSpider(CrawlSpider):
             logfile = os.path.join(log_path, logfile)
             print logfile
             handle = open(logfile, 'w')
-            log_observer = ScrapyFileLogObserver(handle, level=logging.DEBUG)
+            log_observer = ScrapyFileLogObserver(handle, level=logging.INFO)
             log_observer.start()
             
             error_file = "scrapy_%s_%s_%s_Error.log" % (self.name, self._type, time)
@@ -86,7 +86,11 @@ class GeneralSpider(CrawlSpider):
 
         item = SitemapItem()
         item['link'] = response.url
-        item['content'] = response.body_as_unicode()
+        try:
+            item['content'] = response.body_as_unicode()
+        except Exception, e:
+            log.msg('Error: %s' % e, log.ERROR)
+            item['content'] = response.body
         return item
 
     def __str__(self):

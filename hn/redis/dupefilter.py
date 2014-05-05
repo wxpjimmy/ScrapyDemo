@@ -27,6 +27,20 @@ class RFPDupeFilter(BaseDupeFilter):
         self.extra_filter_keys = extra_filter_keys
         self.key_exist = key_exist
         self.key_expire = key_expire
+        self.fp_persist = set()
+        self.fp_to_persist = set()
+        start = time.time()
+        if self.key_exist:
+            persisted = server.smembers(self.key)
+            if persisted:
+                self.fp_persist.update(persisted)
+            if self.extra_filter_keys:
+                for extra_key in self.extra_filter_keys:
+                    rs = server.smembers(extra_key)
+                    if rs:
+                        self.fp_persist.update(persisted)
+        cost = (time.time() - start)*1000.0
+        log.msg('load persisted fingerprints from redis:(cost: %0.3f) (num: %d)' % (cost, len(self.fp_persist)), log.WARNING)
 
     @classmethod
     def from_settings(cls, settings):
@@ -51,22 +65,30 @@ class RFPDupeFilter(BaseDupeFilter):
         fp = request_fingerprint(request)
  #       log.msg("Url: %s  Fingerprint: %s type: %s" % (request.url, fp, str(type(fp))), log.WARNING)
         if self.key_exist:
-            if self.server.sismember(self.key,fp):
+            if fp in self.fp_persist or fp in self.fp_to_persist:
                 return True
-            if self.extra_filter_keys is not None:
-                for extra_key in self.extra_filter_keys:
-                    if self.server.sismember(extra_key, fp):
-                        return True
-            self.server.sadd(self.key, fp)
-            return False
+            self.fp_to_persist.add(fp)
         else:
             self.server.sadd(self.key, fp)
+            self.fp_persist.add(fp)
             self.server.expire(self.key, self.key_expire)
             self.key_exist = True
+            
+        return False
 
     def close(self, reason):
         """Delete data on close. Called by scrapy's scheduler"""
-        self.clear()
+#        self.clear()
+        log.msg('DupeFilter closing...')
+        if self.fp_to_persist:
+            count = len(self.fp_to_persist)
+            log.msg('fingerprints to persist num: %d' % count)
+            start = time.time()
+            self.server.sadd(self.key, *self.fp_to_persist)
+            cost = (time.time() - start)*1000.0
+            log.msg('Persist %d fingerprints to redis on closing, cost: %0.3f' % (len(self.fp_to_persist), cost))
+            self.fp_to_persist.clear()
+            self.fp_persist.clear()
 
     def clear(self):
         """Clears fingerprints data"""

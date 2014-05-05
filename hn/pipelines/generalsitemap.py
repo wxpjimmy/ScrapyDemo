@@ -1,5 +1,5 @@
 from scrapy import log
-from hn.utils.es_api import *
+from MacCrawl.utils.es_api import *
 import redis
 from datetime import datetime, timedelta
 import traceback

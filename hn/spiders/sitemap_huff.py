@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup as bs
 from scrapy.http import Request
-from hn.items import SitemapItem
+from MacCrawl.items import SitemapItem
 import dateutil
 from dateutil.parser import parse
 

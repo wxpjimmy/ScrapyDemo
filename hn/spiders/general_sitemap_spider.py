@@ -2,12 +2,12 @@ from datetime import datetime, timedelta
 from bs4 import BeautifulSoup as bs
 from scrapy.spider import Spider
 from scrapy.http import Request, XmlResponse
-from hn.items import TcNewItem
+from MacCrawl.items import TcNewItem
 from ElasticsearchClient import ES
 import re
 import os
 from scrapy import log
-from hn.utils.sitemap_util import SitemapUtil, sitemap_urls_from_robots
+from MacCrawl.utils.sitemap_util import SitemapUtil, sitemap_urls_from_robots
 from scrapy.utils.gz import gunzip, is_gzipped
 from sitemap_util import *
 import logging
@@ -28,7 +28,7 @@ class GeneralSitemapSpider(Spider):
         else:
             self._type = key
             print key
-            time =  datetime.datetime.utcnow()
+            time =  datetime.utcnow()
             log_path = '/var/log/scrapyd/logs/'
 #            exist = os.path.exists(log_path)
 #            if not exist:
@@ -47,7 +47,7 @@ class GeneralSitemapSpider(Spider):
             error_observer.start()
 
             self.key = "%s:%s" % (self.name, self._type)
-            self.lastmodified = datetime.datetime.utcnow()
+            self.lastmodified = datetime.utcnow()
 
             # load urls, load last crawled time
         super(GeneralSitemapSpider, self).__init__(self.name, **kwargs)
@@ -61,11 +61,11 @@ class GeneralSitemapSpider(Spider):
 
         cached = self.server.get(self.key)
         if cached is None:
-            now = datetime.datetime.utcnow()
+            now = datetime.utcnow()
             start = now - timedelta(days=7)
-            self.lastmodified = datetime.datetime(start.year, start.month, start.day)
+            self.lastmodified = datetime(start.year, start.month, start.day)
         else:
-            self.lastmodified = datetime.datetime.strptime(cached, '%Y-%m-%d %H:%M:%S')
+            self.lastmodified = datetime.strptime(cached, '%Y-%m-%d %H:%M:%S')
 
         print self.lastmodified
         urls = SM_URL.get(self._type)
@@ -105,12 +105,13 @@ class GeneralSitemapSpider(Spider):
             link = values['loc']
             format = SM_DATE.get(self._type)
             title = values.get('title')
+            item = None
             if title:
                 date = values.get('publication_date')
                 item = SitemapItem()
                 item['title'] = title
                 if format:
-                    item['update'] = datetime.datetime.strptime(date, format)
+                    item['update'] = datetime.strptime(date, format)
                 else:
                     dt = parse(date)
                     dt_utc = dt.astimezone(dateutil.tz.tzutc()).replace(tzinfo=None)
@@ -121,7 +122,7 @@ class GeneralSitemapSpider(Spider):
                 if date:
                     item = SitemapItem()
                     if format:
-                        item['update'] = datetime.datetime.strptime(date, format)
+                        item['update'] = datetime.strptime(date, format)
                     else:
                         dt = parse(date)
                         dt_utc = dt.astimezone(dateutil.tz.tzutc()).replace(tzinfo=None)

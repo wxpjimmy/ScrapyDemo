@@ -50,7 +50,7 @@ class Scheduler(object):
         queue_key = settings.get('SCHEDULER_QUEUE_KEY', QUEUE_KEY)
         queue_cls = load_object(settings.get('SCHEDULER_QUEUE_CLASS', QUEUE_CLASS))
         dupefilter_key = settings.get('DUPEFILTER_KEY', DUPEFILTER_KEY)
-        dupefilter_expire = settings.get('DUPEFILTER_EXPIRE', 2*24*3600)
+        dupefilter_expire = settings.get('DUPEFILTER_EXPIRE', 172800)
 #        dupefilter_extra_keys = settings.get('EXTRA_DUPEFILTER_KEYS', EXTRA_DUPEFILTER_KEYS)
         server = redis.Redis(host, port)
         return cls(server, persist, queue_key, queue_cls, dupefilter_key, dupefilter_expire)
@@ -71,8 +71,8 @@ class Scheduler(object):
         time = datetime.utcnow()
         key = self.dupefilter_key % {'spider': spider, 'date': time.strftime('%Y%m%d')}
         extra_keys = []
-        num = self.dupefilter_expire/(24*3600)
-        for index in range(1, self.dupefilter_expire):
+        num = self.dupefilter_expire/86400
+        for index in range(1, num):
             lst_time = time - timedelta(days=index)
             extra_key = self.dupefilter_key % {'spider': spider, 'date': time.strftime('%Y%m%d')}
             extra_keys.append(extra_key)
@@ -83,6 +83,8 @@ class Scheduler(object):
             spider.log("Resuming crawl (%d requests scheduled)" % len(self.queue))
 
     def close(self, reason):
+        print reason
+        self.df.close(reason)
         if not self.persist:
 #            self.df.clear()
             self.queue.clear()
