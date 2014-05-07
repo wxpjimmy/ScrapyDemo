@@ -74,7 +74,9 @@ class GeneralSitemapSpider(Spider):
         for url in urls:
             yield Request(url, callback=self._parse_sitemap, dont_filter=True)
 
-
+#                func = SM_FUNC.get(self._type)
+#                print func.__name__
+#                for req in func(self, s):
     def _parse_sitemap(self, response):
         print response.url
         if response.url.endswith('/robots.txt'):
@@ -86,19 +88,20 @@ class GeneralSitemapSpider(Spider):
                 log.msg(format="Ignoring invalid sitemap: %(response)s",
                         level=log.WARNING, spider=self, response=response)
                 return
+            try:
+                s = SitemapUtil(body)
+                print s.type
+                if s.type == 'sitemapindex':
+                    for link in self._filter_loc(s):
+                        print link
+                        yield Request(link, callback=self._parse_sitemap, dont_filter=True)
+                elif s.type == 'urlset':
+                    for req in self.process_urlset(s):
+                        yield req
 
-            s = SitemapUtil(body)
-            print s.type
-            if s.type == 'sitemapindex':
-                for link in self._filter_loc(s):
-                    print link
-                    yield Request(link, callback=self._parse_sitemap, dont_filter=True)
-            elif s.type == 'urlset':
-#                func = SM_FUNC.get(self._type)
-#                print func.__name__
-#                for req in func(self, s):
-                for req in self.process_urlset(s):
-                    yield req
+            except Exception,e:
+                log.msg("Exception occurred: %s" % e, log.ERROR)
+                log.msg("Content: %s" % response.body, log.ERROR)
 
     def process_urlset(self, s):
         for values in s:
@@ -158,7 +161,7 @@ class GeneralSitemapSpider(Spider):
 #            yield item
 
     def _extract_title(self, data):
-        func = PAGE_FUNC.get(self._type)
+        func = TITLE_FUNC.get(self._type)
         if func:
             return func(data)
         return

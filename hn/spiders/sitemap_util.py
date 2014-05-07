@@ -75,8 +75,8 @@ SM_URL = {
 #                'http://online.wsj.com/sitemap.xml'
 #                'http://online.wsj.com/public/resources/documents/google/wsj/google_sitemap_index.xml'
                 ],
-        "cnn": ['http://edition.cnn.com/sitemaps/sitemap-news.xml',
-                'http://edition.cnn.com/sitemaps/sitemap-index.xml'],
+        "cnn": ['http://edition.cnn.com/sitemaps/sitemap-news.xml'],
+#                'http://edition.cnn.com/sitemaps/sitemap-index.xml'],
         "reuter": ['http://www.reuters.com/sitemap_news_index.xml'],
         "bbc": ['http://www.bbc.co.uk/news/news_sitemap.xml',
                 'http://www.bbc.co.uk/news/sitemap.xml'],

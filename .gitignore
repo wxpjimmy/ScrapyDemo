@@ -1,0 +1,7 @@
+*.pyc
+logs/*
+build/*
+project.egg-info/*
+setup.py
+twistd.pid
+*.log

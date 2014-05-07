@@ -14,7 +14,7 @@ RULE_MAP = { "yahoo": (
             "gnews":  (
             Rule(SgmlLinkExtractor(allow=(r'https?://news.google.com/news/section.*'), deny=(r'.*ict=clu_top'), restrict_xpaths=(r'//*[@id="nav-menu-wrapper"]', r'//*[@id="main-pane"]/div/div/div[3]'))),
             # for those website in the deny_domains are already crawled by sitemap crawler, here we don't need to re-crawl them, just ignore them
-            Rule(SgmlLinkExtractor(allow=(r'.*'), deny=(r'.*//.*.google.*/.*', r'.js', r'.php', r'.*/videos?/.*', r'.*/photos?/.*'), 
+            Rule(SgmlLinkExtractor(allow=(r'.*'), deny=(r'.*.google.*/.*', r'.js', r'.php', r'.*/videos?/.*', r'.*/photos?/.*'), 
                 deny_domains=('huffingtonpost.com', 'wsj.com','cnn.com','reuters.com','bbc.co.uk','bbc.com','forbes.com','usatoday.com','lifehacker.com','mashable.com',
                 'washingtonpost.com','news.yahoo.com','news.msn.com', 'nytimes.com')), callback='process_content'),
             ),

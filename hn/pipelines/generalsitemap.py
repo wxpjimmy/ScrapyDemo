@@ -128,8 +128,9 @@ class GeneralSitemapPipeline(object):
             else:
                 log.msg('no page crawled!')
 
-            date = datetime.utcnow().date()
-
+            """date = datetime.utcnow().date()
+            key = "%s:%s" % (spider, "lastrun")
+            self.server.set(key, self.stats._stats.get())
             #save running stats to local file
             rootdir = spider.settings.get('STATS_LOG_PATH', '/var/log/scrapyd/stats/')
             filename = "Stats_%s_%s.log" % (spider._type, date)
@@ -137,7 +138,7 @@ class GeneralSitemapPipeline(object):
             
             with open(filename, 'a+') as fs:
                 stats = pprint.pformat(self.stats._stats)
-                fs.write(stats + '\n\n')
+                fs.write(stats + '\n\n')"""
 
             log.msg("Close Spider [%s] in GeneralSitemapPipeline." % key)
 

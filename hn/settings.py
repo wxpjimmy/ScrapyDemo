@@ -31,6 +31,8 @@ DOWNLOADER_MIDDLEWARES = {
     'MacCrawl.contrib.downloadmiddleware.rotate_useragent.RotateUserAgentMiddleware':400,
 }
 
+STATS_CLASS = 'MacCrawl.utils.macstats.MacStatsCollector'
+
 USER_AGENT = ''
 
 COOKIES_ENABLED = False

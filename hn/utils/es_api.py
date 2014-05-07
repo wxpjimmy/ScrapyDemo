@@ -3,14 +3,17 @@ import json
 from datetime import datetime
 import time
 from scrapy import log
+from .monitors import datadog
 
 def timeit(func):
     def wrap(*args):
         time1 = time.time()
         ret = func(*args)
         time2 = time.time()
-        log.msg('%s function took %0.3f ms' % (func.func_name, (time2-time1)*1000.0), log.DEBUG)
+        cost = (time2-time1)*1000.0
+        log.msg('%s function took %0.3f ms' % (func.func_name, cost), log.DEBUG)
         # should replace the printing with record to StatsD(categorized by func_name)
+        datadog.gauge('es.bulk.index.cost', cost)
         return ret
     return wrap
 
