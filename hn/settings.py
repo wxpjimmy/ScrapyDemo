@@ -33,6 +33,8 @@ DOWNLOADER_MIDDLEWARES = {
 
 STATS_CLASS = 'MacCrawl.utils.macstats.MacStatsCollector'
 
+LOG_FORMATTER = 'MacCrawl.contrib.logformatter.PoliteLogFormatter'
+
 USER_AGENT = ''
 
 COOKIES_ENABLED = False

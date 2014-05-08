@@ -13,7 +13,20 @@ def timeit(func):
         cost = (time2-time1)*1000.0
         log.msg('%s function took %0.3f ms' % (func.func_name, cost), log.DEBUG)
         # should replace the printing with record to StatsD(categorized by func_name)
-        datadog.gauge('es.bulk.index.cost', cost)
+#        datadog.gauge('crawler.es.bulk.index.cost', cost)
+        return ret
+    return wrap
+
+
+def bulk_timeit(func):
+    def wrap(*args):
+        time1 = time.time()
+        ret = func(*args)
+        time2 = time.time()
+        cost = (time2-time1)*1000.0
+        log.msg('%s function took %0.3f ms' % (func.func_name, cost), log.DEBUG)
+        # should replace the printing with record to StatsD(categorized by func_name)
+        datadog.gauge('crawler.es.bulk.index.cost', cost)
         return ret
     return wrap
 
@@ -77,7 +90,7 @@ class ES(object):
             result.append(res)
         return {"cost": cost, "result":result}
 
-    @timeit
+    @bulk_timeit
     def bulk_index(self, s_type, stats_only = False):
         try:
             success, fail = helpers.bulk(self.instance, self.actions, stats_only)
@@ -103,7 +116,6 @@ class ES(object):
                     fail += 1
             del self.actions[0:len(self.actions)]
             return success, fail
-
 
     @timeit
     def index(self, url, content, title, update, s_type, bulk = True, bulk_size = 100):

@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import traceback
 import pprint
 import os
+from scrapy.exceptions import DropItem
 
 
 class GeneralSitemapPipeline(object):
@@ -69,7 +70,9 @@ class GeneralSitemapPipeline(object):
             else:
                 # not time stamp found
                 self._index_page(item, update, spider._type)
-        return item
+#        return item
+        #for we don't need to save the item, here just raise a drop item exception to ignore the post processing
+        raise DropItem('Already indexed, Ignore : %s' % item['link'])
 
     def _index_page(self, item, update, type, bulk = True):
         try:

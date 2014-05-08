@@ -20,10 +20,12 @@ class MacStatsCollector(StatsCollector):
         cost = (stats['finish_time'] - stats['start_time']).total_seconds()
         norm_cost = cost//60
         tag = str(spider)
+        tag = tag.replace(":", "_")
+        tag = "crawler:%s" % tag
         datadog.gauge('crawler.crawl.cost', cost, tags=[tag])
         datadog.gauge('crawler.crawl.cost.norm_in_minute', norm_cost, tags=[tag])
-        datadog.gauge('es.index.success', stats['es/index/success'], tags=[tag])
-        datadog.gauge('es.index.failed', stats['es/index/failed'], tags=[tag])
+        datadog.gauge('crawler.es.index.success', stats['es/index/success'], tags=[tag])
+        datadog.gauge('crawler.es.index.failed', stats['es/index/failed'], tags=[tag])
         datadog.gauge('crawler.scraped.count', stats.get('item_scraped_count', 0), tags=[tag])
         excep_count = 0
         for k in stats:

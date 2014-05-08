@@ -85,6 +85,12 @@ class Datadog(object):
         else:
             log.msg("Gauge: %s, %s" % (key, value))
 
+    def histogram(self, key, value, tags=None):
+        if tags:
+            log.msg("histogram: %s, %s, %s" % (key, value, tags))
+        else:
+            log.msg("histogram: %s, %s" % (key, value))
+
 try:
     from statsd import statsd as datadog
 except:
